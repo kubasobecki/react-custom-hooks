@@ -1,23 +1,28 @@
-import { useState } from 'react';
 import Section from '../UI/Section';
 import TaskForm from './TaskForm';
-import useRequest from '../../hooks/use-request';
+import useHttp from '../../hooks/use-http';
+import { FIREBASE_URL } from '../../env';
 
 const NewTask = props => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const { isLoading, error, sendRequest } = useHttp();
 
     const enterTaskHandler = async taskText => {
-        setIsLoading(true);
-        setError(null);
+        const applyData = taskObj => {
+            const generatedId = taskObj.name; // firebase-specific => "name" contains generated id
+            const createdTask = { id: generatedId, text: taskText };
 
-        const data = await useRequest(taskText);
+            props.onAddTask(createdTask);
+        };
 
-        const generatedId = data.name; // firebase-specific => "name" contains generated id
-        const createdTask = { id: generatedId, text: taskText };
-
-        props.onAddTask(createdTask);
-        setIsLoading(false);
+        await sendRequest(
+            {
+                url: FIREBASE_URL,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: { text: taskText }
+            },
+            applyData
+        );
     };
 
     return (

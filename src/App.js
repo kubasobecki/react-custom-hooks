@@ -1,30 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Tasks from './components/Tasks/Tasks';
 import NewTask from './components/NewTask/NewTask';
-import useRequest from './hooks/use-request';
+import useHttp from './hooks/use-http';
+import { FIREBASE_URL } from './env';
 
 function App() {
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
     const [tasks, setTasks] = useState([]);
 
-    const fetchTasks = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        const data = await useRequest();
-
-        const loadedTasks = [];
-        for (const taskKey in data)
-            loadedTasks.push({ id: taskKey, text: data[taskKey].text });
-
-        setTasks(loadedTasks);
-        setIsLoading(false);
-    };
+    const { isLoading, error, sendRequest: fetchTasks } = useHttp();
 
     useEffect(() => {
-        fetchTasks();
-    }, []);
+        const transformTasks = tasksObj => {
+            const loadedTasks = [];
+            for (const taskKey in tasksObj)
+                loadedTasks.push({ id: taskKey, text: tasksObj[taskKey].text });
+
+            setTasks(loadedTasks);
+        };
+
+        fetchTasks({ url: FIREBASE_URL }, transformTasks);
+    }, [fetchTasks]);
 
     const taskAddHandler = task => {
         setTasks(prevTasks => prevTasks.concat(task));
