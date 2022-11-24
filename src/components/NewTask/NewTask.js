@@ -4,24 +4,23 @@ import useHttp from '../../hooks/use-http';
 import { FIREBASE_URL } from '../../env';
 
 const NewTask = props => {
-    const { isLoading, error, sendRequest } = useHttp();
+    const { isLoading, error, sendRequest: sendTaskRequest } = useHttp();
+
+    const createTask = (taskText, taskObj) => {
+        const generatedId = taskObj.name; // firebase-specific => "name" contains generated id
+        const createdTask = { id: generatedId, text: taskText };
+        props.onAddTask(createdTask);
+    };
 
     const enterTaskHandler = async taskText => {
-        const applyData = taskObj => {
-            const generatedId = taskObj.name; // firebase-specific => "name" contains generated id
-            const createdTask = { id: generatedId, text: taskText };
-
-            props.onAddTask(createdTask);
-        };
-
-        await sendRequest(
+        await sendTaskRequest(
             {
                 url: FIREBASE_URL,
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: { text: taskText }
             },
-            applyData
+            createTask.bind(null, taskText)
         );
     };
 
